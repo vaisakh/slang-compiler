@@ -6,18 +6,33 @@ public class Lexer {
     int cursor;
     int length;
     double number;
+    private int index;
     private ValueTable[] keywords = null;
-    private String lastStr;
+    public String lastStr;
+    private Token currentToken;
+    private Token lastToken;
 
 
     public Lexer(String expression) {
         this.expression = expression;
         this.length = expression.length();
         this.cursor = 0;
+        this.index = 0;
 
-        this.keywords = new ValueTable[16];
-        this.keywords[0] = new ValueTable(Token.TOK_PRINT, "PRINT");
-        this.keywords[1] = new ValueTable(Token.TOK_PRINTLN, "PRINTLINE");
+        this.keywords = new ValueTable[7];
+        keywords[0] = new ValueTable(Token.TOK_BOOL_FALSE, "FALSE");
+        keywords[1] = new ValueTable(Token.TOK_BOOL_TRUE, "TRUE");
+        keywords[2] = new ValueTable(Token.TOK_VAR_STRING, "STRING");
+        keywords[3] = new ValueTable(Token.TOK_VAR_BOOL, "BOOLEAN");
+        keywords[4] = new ValueTable(Token.TOK_VAR_NUMBER, "NUMERIC");
+        keywords[5] = new ValueTable(Token.TOK_PRINT, "PRINT");
+        keywords[6] = new ValueTable(Token.TOK_PRINTLN, "PRINTLINE");
+    }
+
+    protected Token getNext() throws Exception {
+        lastToken = currentToken;
+        currentToken = getToken();
+        return currentToken;
     }
 
     public Token getToken() throws Exception {
@@ -136,4 +151,29 @@ public class Lexer {
     }
 
     public double getNumber() { return number; }
+
+    public String getCurrentLine(int index) {
+        int tindex = index;
+        if (index >= length) {
+            tindex = length - 1;
+        }
+        while (tindex > 0 && expression.toCharArray()[tindex] != '\n')
+            tindex--;
+
+        if (expression.toCharArray()[tindex] == '\n')
+            tindex++;
+
+        String CurrentLine = "";
+
+        while (tindex < length && (expression.toCharArray()[tindex] != '\n')) {
+            CurrentLine = CurrentLine + expression.toCharArray()[tindex];
+            tindex++;
+        }
+
+        return CurrentLine + "\n";
+    }
+
+    public int saveIndex(){
+        return index;
+    }
 }

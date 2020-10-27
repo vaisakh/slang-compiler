@@ -7,13 +7,13 @@ public class ExpressionBuilder extends Builder {
         this.expressionString = expressionString;
     }
 
-    public Expression getExpression()
-    {
-        try {
-            RDParser p = new RDParser(expressionString);
-            return p.callExpression();
-        } catch (Exception e) {
-            return null;
-        }
-    }
+//    public Expression getExpression()
+//    {
+//        try {
+//            RDParser p = new RDParser(expressionString);
+//            return p.callExpression();
+//        } catch (Exception e) {
+//            return null;
+//        }
+//    }
 }

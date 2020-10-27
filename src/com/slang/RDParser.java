@@ -10,10 +10,10 @@ public class RDParser extends Lexer {
         super(expression);
     }
 
-    public Expression callExpression() throws Exception {
-        currentToken = getToken();
-        return Expr();
-    }
+//    public Expression callExpression() throws Exception {
+//        currentToken = getToken();
+//        return Expr();
+//    }
 
     protected Token getNext() throws Exception {
         lastToken = currentToken;
@@ -21,74 +21,99 @@ public class RDParser extends Lexer {
         return currentToken;
     }
 
-    public Expression Expr() throws Exception {
+    public Expression Expr(CompilationContext context) throws Exception {
         Token lToken;
-        Expression returnValue = Term();
+        Expression returnValue = Term(context);
 
         while (currentToken == Token.TOK_PLUS || currentToken == Token.TOK_SUB) {
             lToken = currentToken;
             currentToken = getToken();
-            Expression e1 = Expr();
-            returnValue = new BinaryExpression(returnValue, e1,
-                    lToken == Token.TOK_PLUS ? Token.TOK_PLUS : Token.TOK_SUB);
+            Expression e1 = Expr(context);
+
+            if(lToken == Token.TOK_PLUS) {
+                returnValue = new BinaryPlus(returnValue, e1);
+            } else {
+                returnValue = new BinaryMinus(returnValue, e1);
+            }
         }
         return returnValue;
 
     }
 
-    public Expression Term() throws Exception {
-        Token l_token;
-        Expression returnValue = Factor();
+    public Expression Term(CompilationContext context) throws Exception {
+        Token lToken;
+        Expression returnValue = Factor(context);
 
         while (currentToken == Token.TOK_MUL || currentToken == Token.TOK_DIV)
         {
-            l_token = currentToken;
+            lToken = currentToken;
             currentToken = getToken();
 
-
-            Expression e1 = Term();
-            returnValue = new BinaryExpression(returnValue, e1,
-                    l_token == Token.TOK_MUL ? Token.TOK_MUL : Token.TOK_DIV);
-
+            Expression e1 = Term(context);
+            if(lToken == Token.TOK_MUL) {
+                returnValue = new Multiply(returnValue, e1);
+            } else {
+                returnValue = new Division(returnValue, e1);
+            }
         }
 
         return returnValue;
     }
 
-    public Expression Factor() throws Exception {
+    public Expression Factor(CompilationContext context) throws Exception {
         Token lToken;
         Expression returnValue = null;
-        if (currentToken == Token.TOK_DOUBLE)
-        {
 
+        if(currentToken == Token.TOK_NUMERIC) {
             returnValue = new NumericConstantExpression(getNumber());
             currentToken = getToken();
-
+        }
+        else if (currentToken == Token.TOK_STRING) {
+            returnValue = new StringLiteralExpression(lastStr);
+            currentToken = getToken();
+        }
+        else if (currentToken == Token.TOK_BOOL_FALSE || currentToken == Token.TOK_BOOL_TRUE)
+        {
+            returnValue = new BooleanConstantExpression(currentToken == Token.TOK_BOOL_TRUE ? true : false);
+            currentToken = getToken();
+        }
+        else if (currentToken == Token.TOK_DOUBLE)
+        {
+            returnValue = new NumericConstantExpression(getNumber());
+            currentToken = getToken();
         }
         else if (currentToken == Token.TOK_OPAREN)
         {
-
             currentToken = getToken();
 
-            returnValue = Expr();  // Recurse
+            returnValue = Expr(context);  // Recurse
 
             if (currentToken != Token.TOK_CPAREN)
             {
                 System.out.println("Missing Closing Parenthesis\n");
                 throw new Exception();
-
             }
             currentToken = getToken();
         }
-
         else if (currentToken == Token.TOK_PLUS || currentToken == Token.TOK_SUB)
         {
             lToken = currentToken;
             currentToken = getToken();
-            returnValue = Factor();
+            returnValue = Factor(context);
 
-            returnValue = new UnaryExpression(returnValue,
-                    lToken == Token.TOK_PLUS ? Token.TOK_PLUS : Token.TOK_SUB);
+            if(lToken == Token.TOK_PLUS) {
+                returnValue = new UnaryPlus(returnValue);
+            } else {
+                returnValue = new UnaryMinus(returnValue);
+            }
+        } else if(currentToken == Token.TOK_UNQUOTED_STRING) {
+            String str = super.lastStr;
+            Symbol symbol = context.getSymbolTable().getSymbol(str);
+            if (symbol == null)
+                throw new Exception("Undefined symbol");
+
+            getNext();
+            returnValue = new VariableExpression(symbol);
         }
         else
         {
@@ -100,19 +125,19 @@ public class RDParser extends Lexer {
 
     }
 
-    public ArrayList Parse() throws Exception {
+    public ArrayList Parse(CompilationContext context) throws Exception {
         getNext();  // Get the Next Token
         //
         // Parse all the statements
         //
-        return StatementList();
+        return StatementList(context);
     }
 
-    private ArrayList StatementList() throws Exception {
+    private ArrayList StatementList(CompilationContext context) throws Exception {
         ArrayList arr = new ArrayList();
         while (currentToken != Token.TOK_NULL)
         {
-            Statement temp = Statement();
+            Statement temp = Statement(context);
             if (temp != null)
             {
                 arr.add(temp);
@@ -121,26 +146,37 @@ public class RDParser extends Lexer {
         return arr;
     }
 
-    private Statement Statement() throws Exception {
+    private Statement Statement(CompilationContext context) throws Exception {
         Statement retval = null;
         switch (currentToken) {
+            case TOK_VAR_STRING:
+            case TOK_VAR_NUMBER:
+            case TOK_VAR_BOOL:
+//                retval = ParseVariableStatement(context);
+                retval = ParseVariableDeclStatement(context);
+                getNext();
+                return retval;
             case TOK_PRINT:
-                retval = ParsePrintStatement();
+                retval = ParsePrintStatement(context);
                 getNext();
                 break;
             case TOK_PRINTLN:
-                retval = ParsePrintLNStatement();
+                retval = ParsePrintLNStatement(context);
                 getNext();
                 break;
+            case TOK_UNQUOTED_STRING:
+                retval = ParseAssignmentStatement(context);
+                getNext();
+                return retval;
             default:
                 throw new Exception("Invalid statement");
         }
         return retval;
     }
 
-    private Statement ParsePrintStatement() throws Exception {
+    private Statement ParsePrintStatement(CompilationContext context) throws Exception {
         getNext();
-        Expression a = Expr();
+        Expression a = Expr(context);
 
         if (currentToken != Token.TOK_SEMI)
         {
@@ -149,14 +185,74 @@ public class RDParser extends Lexer {
         return new PrintStatement(a);
     }
 
-    private Statement ParsePrintLNStatement() throws Exception {
+    private Statement ParsePrintLNStatement(CompilationContext context) throws Exception {
         getNext();
-        Expression a = Expr();
+        Expression a = Expr(context);
 
         if (currentToken != Token.TOK_SEMI)
         {
             throw new Exception("; is expected");
         }
         return new PrintLineStatement(a);
+    }
+
+    public Statement ParseVariableDeclStatement(CompilationContext context) throws Exception {
+        Token token = currentToken;
+
+        getNext();
+
+        if(currentToken == Token.TOK_UNQUOTED_STRING) {
+            Symbol symbol = new Symbol();
+            symbol.name = super.lastStr;
+            symbol.type = (token == Token.TOK_VAR_BOOL) ? Type.BOOLEAN : (token == Token.TOK_VAR_NUMBER) ? Type.NUMERIC : Type.STRING;
+
+            getNext();
+
+            if(currentToken == Token.TOK_SEMI) {
+                context.getSymbolTable().addSymbol(symbol);
+                return new VariableDeclarationStatement(symbol);
+            } else {
+                CSyntaxErrorLog.addLine("; expected");
+                CSyntaxErrorLog.addLine(getCurrentLine(saveIndex()));
+                throw new CParserException(-100, ", or ; expected", saveIndex());
+            }
+        } else {
+            CSyntaxErrorLog.addLine("invalid variable declaration"); CSyntaxErrorLog.addLine(getCurrentLine(saveIndex()));
+            throw new CParserException(-100, ", or ; expected", saveIndex());
+        }
+    }
+
+    public Statement ParseAssignmentStatement(CompilationContext context) throws Exception {
+        String variable = super.lastStr;
+        Symbol symbol = context.getSymbolTable().getSymbol(variable);
+
+        if(symbol == null) {
+            CSyntaxErrorLog.addLine("Variable not found " + lastStr);
+            CSyntaxErrorLog.addLine(getCurrentLine(saveIndex()));
+            throw new CParserException(-100, "Variable not found", saveIndex());
+        }
+
+        getNext();
+
+        if (currentToken != Token.TOK_ASSIGN) {
+            CSyntaxErrorLog.addLine("= expected");
+            CSyntaxErrorLog.addLine(getCurrentLine(saveIndex()));
+            throw new CParserException(-100, "= expected", saveIndex());
+        }
+
+        getNext();
+
+        Expression expression = Expr(context);
+        if (expression.TypeCheck(context) != symbol.type) {
+            throw new Exception("Type mismatch in assignment");
+        }
+
+        if (currentToken != Token.TOK_SEMI) {
+            CSyntaxErrorLog.addLine("; expected");
+            CSyntaxErrorLog.addLine(getCurrentLine(saveIndex()));
+            throw new CParserException(-100, " ; expected", -1);
+        }
+
+        return new AssignmentStatement(symbol, expression);
     }
 }

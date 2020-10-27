@@ -1,6 +1,6 @@
 package com.slang;
 
 public abstract class Statement {
-    public abstract boolean Execute(RuntimeContext context);
+    public abstract Symbol Execute(RuntimeContext context) throws Exception;
 
 }
