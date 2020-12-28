@@ -6,7 +6,7 @@ public class StringLiteralExpression extends Expression {
     public StringLiteralExpression(String value) {
         this.symbol = new Symbol();
         this.symbol.name = null;
-        this.symbol.name = value;
+        this.symbol.stringValue = value;
         this.symbol.type = Type.STRING;
     }
     @Override

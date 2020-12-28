@@ -3,7 +3,7 @@ package com.slang;
 public class CompilationContext {
     private SymbolTable symbolTable;
 
-    CompilationContext() {
+    public CompilationContext() {
         this.symbolTable = new SymbolTable();
     }
 

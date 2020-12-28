@@ -7,10 +7,10 @@ public class Lexer {
     int length;
     double number;
     private int index;
-    private ValueTable[] keywords = null;
+    protected ValueTable[] keywords = null;
     public String lastStr;
-    private Token currentToken;
-    private Token lastToken;
+    protected Token currentToken;
+    protected Token lastToken;
 
 
     public Lexer(String expression) {
@@ -85,6 +85,28 @@ public class Lexer {
                     token = Token.TOK_SEMI;
                     cursor++;
                     break;
+                case '=':
+                    token = Token.TOK_ASSIGN;
+                    cursor++;
+                    break;
+                case '"': {
+                    String tempString = "";
+                    cursor++;
+                    while (cursor < length && expression.charAt(cursor) != '"') {
+                        tempString += expression.charAt(cursor);
+                        cursor++;
+                    }
+
+                    if(cursor == length) {
+                        token = Token.ILLEGAL_TOKEN;
+                        return token;
+                    } else {
+                        cursor++;
+                        lastStr = tempString;
+                        token = Token.TOK_STRING;
+                        return token;
+                    }
+                }
                 case '0':
                 case '1':
                 case '2':
@@ -118,6 +140,7 @@ public class Lexer {
                 break;
                 default: {
                     if (Character.isLetter(expression.charAt(cursor))) {
+                        //ie. PRINT or PRINTLINE
 
                         String tempString = String.valueOf(expression.charAt(cursor));
                         cursor++;
@@ -127,8 +150,10 @@ public class Lexer {
                             tempString += expression.charAt(cursor);
                             cursor++;
                         }
+                        //PRINT or PRINTLINE
 
                         tempString = tempString.toUpperCase();
+
 
                         for (int i = 0; i < keywords.length; ++i) {
                             if (keywords[i].value.compareTo(tempString) == 0)
@@ -141,8 +166,8 @@ public class Lexer {
                     else
                     {
                         token = Token.ILLEGAL_TOKEN;
-//                        System.out.println("Error While Analyzing Tokens");
-//                        throw new Exception();
+                        System.out.println("Error While Analyzing Tokens");
+                        throw new Exception();
                     }
                 }
             }
@@ -175,5 +200,40 @@ public class Lexer {
 
     public int saveIndex(){
         return index;
+    }
+
+    public String getPreviousLine(int pindex) {
+
+        int tindex = pindex;
+        while ((tindex > 0 )&& (expression.toCharArray()[tindex] != '\n')) {
+            tindex--;
+        }
+
+        if (expression.toCharArray()[tindex] == '\n') {
+            tindex--;
+        } else {
+            return "";
+        }
+
+        while ((tindex > 0) && (expression.toCharArray()[tindex] != '\n')) {
+            tindex--;
+        }
+
+        if (expression.toCharArray()[tindex] == '\n') {
+            tindex--;
+        }
+
+        String currentLine = "";
+
+        while (tindex < length && (expression.toCharArray()[tindex] != '\n')) {
+            currentLine = currentLine + expression.toCharArray()[tindex];
+            tindex++;
+        }
+
+        return currentLine + "\n";
+    }
+
+    public void restoreIndex(int m_index) {
+        index = m_index;
     }
 }

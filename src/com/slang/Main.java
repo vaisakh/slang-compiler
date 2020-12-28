@@ -38,18 +38,18 @@ public class Main {
 //        TestFirstScript();
 //        TestSecondScript();
 
-        try {
-            if (args == null || args.length != 1) {
-                System.out.println("CallSlang <scriptname>\n");
-                return;
-            }
-            TestFileScript(args[0]);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-        }
-        System.in.read();
+//        try {
+//            if (args == null || args.length != 1) {
+//                System.out.println("CallSlang <scriptname>\n");
+//                return;
+//            }
+//            TestFileScript(args[0]);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            System.out.println(e.getMessage());
+//            e.printStackTrace();
+//        }
+//        System.in.read();
     }
 
    /* static void TestFirstScript() throws Exception {
@@ -92,16 +92,16 @@ public class Main {
         }
 
 
-        RDParser pars = null;
-        pars = new RDParser(text.toString());
+        RDParser parse = null;
+        parse = new RDParser(text.toString());
         CompilationContext ctx = new CompilationContext();
-        ArrayList stmts = pars.Parse(ctx);
+        ArrayList stmts = parse.Parse(ctx);
 
         RuntimeContext f = new RuntimeContext();
         for (Object obj: stmts)
         {
             Statement s = (Statement) obj;
-            s.Execute(null);
+            s.Execute(f);
         }
 
     }

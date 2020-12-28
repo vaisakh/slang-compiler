@@ -3,8 +3,8 @@ package com.slang;
 import java.util.ArrayList;
 
 public class RDParser extends Lexer {
-    private Token currentToken;
-    private Token lastToken;
+//    private Token currentToken;
+//    private Token lastToken;
 
     public RDParser(String expression) {
         super(expression);
@@ -15,11 +15,11 @@ public class RDParser extends Lexer {
 //        return Expr();
 //    }
 
-    protected Token getNext() throws Exception {
-        lastToken = currentToken;
-        currentToken = getToken();
-        return currentToken;
-    }
+//    protected Token getNext() throws Exception {
+//        lastToken = currentToken;
+//        currentToken = getToken();
+//        return currentToken;
+//    }
 
     public Expression Expr(CompilationContext context) throws Exception {
         Token lToken;
@@ -130,6 +130,7 @@ public class RDParser extends Lexer {
         //
         // Parse all the statements
         //
+
         return StatementList(context);
     }
 
@@ -217,7 +218,8 @@ public class RDParser extends Lexer {
                 throw new CParserException(-100, ", or ; expected", saveIndex());
             }
         } else {
-            CSyntaxErrorLog.addLine("invalid variable declaration"); CSyntaxErrorLog.addLine(getCurrentLine(saveIndex()));
+            CSyntaxErrorLog.addLine("invalid variable declaration");
+            CSyntaxErrorLog.addLine(getCurrentLine(saveIndex()));
             throw new CParserException(-100, ", or ; expected", saveIndex());
         }
     }
@@ -232,6 +234,7 @@ public class RDParser extends Lexer {
             throw new CParserException(-100, "Variable not found", saveIndex());
         }
 
+
         getNext();
 
         if (currentToken != Token.TOK_ASSIGN) {
@@ -243,6 +246,7 @@ public class RDParser extends Lexer {
         getNext();
 
         Expression expression = Expr(context);
+
         if (expression.TypeCheck(context) != symbol.type) {
             throw new Exception("Type mismatch in assignment");
         }

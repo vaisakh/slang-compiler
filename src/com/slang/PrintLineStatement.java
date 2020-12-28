@@ -10,7 +10,14 @@ public class PrintLineStatement extends Statement {
     @Override
     public Symbol Execute(RuntimeContext context) throws Exception {
         Symbol a = expression.Evaluate(context);
-        System.out.println(String.valueOf(a));
+
+        if (a.type == Type.NUMERIC) {
+            System.out.println(a.doubleValue);
+        } else if (a.type == Type.STRING) {
+            System.out.println(a.stringValue);
+        } else {
+            System.out.println(a.booleanValue);
+        }
         return null;
     }
 }
