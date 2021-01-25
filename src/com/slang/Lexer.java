@@ -6,7 +6,7 @@ public class Lexer {
     int cursor;
     int length;
     double number;
-    private int index;
+//    private int index;
     protected ValueTable[] keywords = null;
     public String lastStr;
     protected Token currentToken;
@@ -17,9 +17,9 @@ public class Lexer {
         this.expression = expression;
         this.length = expression.length();
         this.cursor = 0;
-        this.index = 0;
+//        this.index = 0;
 
-        this.keywords = new ValueTable[7];
+        this.keywords = new ValueTable[16];
         keywords[0] = new ValueTable(Token.TOK_BOOL_FALSE, "FALSE");
         keywords[1] = new ValueTable(Token.TOK_BOOL_TRUE, "TRUE");
         keywords[2] = new ValueTable(Token.TOK_VAR_STRING, "STRING");
@@ -27,6 +27,15 @@ public class Lexer {
         keywords[4] = new ValueTable(Token.TOK_VAR_NUMBER, "NUMERIC");
         keywords[5] = new ValueTable(Token.TOK_PRINT, "PRINT");
         keywords[6] = new ValueTable(Token.TOK_PRINTLN, "PRINTLINE");
+        keywords[7] = new ValueTable(Token.TOK_IF, "IF");
+        keywords[8] = new ValueTable(Token.TOK_THEN, "THEN");
+        keywords[9] = new ValueTable(Token.TOK_ELSE, "ELSE");
+        keywords[10] = new ValueTable(Token.TOK_ENDIF, "ENDIF");
+        keywords[11] = new ValueTable(Token.TOK_WHILE, "WHILE");
+        keywords[12] = new ValueTable(Token.TOK_WEND, "WEND");
+        keywords[13] = new ValueTable(Token.TOK_FUNCTION, "FUNCTION");
+        keywords[14] = new ValueTable(Token.TOK_END, "END");
+        keywords[15] = new ValueTable(Token.TOK_RETURN, "RETURN");
     }
 
     protected Token getNext() throws Exception {
@@ -65,12 +74,22 @@ public class Lexer {
                     token = Token.TOK_SUB;
                     cursor++;
                     break;
-                case '/':
-                    token = Token.TOK_DIV;
-                    cursor++;
-                    break;
+                case '/': {
+                    if (expression.charAt(cursor + 1) == '/') {
+                        skipToEoln();
+                        restart = true;
+                    } else {
+                        token = Token.TOK_DIV;
+                        cursor++;
+                    }
+                }
+                break;
                 case '*':
                     token = Token.TOK_MUL;
+                    cursor++;
+                    break;
+                case ',':
+                    token = Token.TOK_COMMA;
                     cursor++;
                     break;
                 case '(':
@@ -85,9 +104,57 @@ public class Lexer {
                     token = Token.TOK_SEMI;
                     cursor++;
                     break;
-                case '=':
-                    token = Token.TOK_ASSIGN;
+                case '!':
+                    token = Token.TOK_NOT;
                     cursor++;
+                    break;
+                case '>':
+                    if (expression.charAt(cursor + 1) == '=') {
+                        token = Token.TOK_GTE;
+                        cursor += 2;
+                    } else {
+                        token = Token.TOK_GT;
+                        cursor++;
+                    }
+                    break;
+                case '<':
+                    if (expression.charAt(cursor + 1) == '=') {
+                        token = Token.TOK_LTE;
+                        cursor += 2;
+                    } else if (expression.charAt(cursor + 1) == '>') {
+                        token = Token.TOK_NEQ;
+                        cursor += 2;
+                    } else {
+                        token = Token.TOK_LT;
+                        cursor++;
+                    }
+                    break;
+                case '=':
+                    if(expression.charAt(cursor + 1) == '=') {
+                        token = Token.TOK_EQ;
+                        cursor += 2;
+                    } else {
+                        token = Token.TOK_ASSIGN;
+                        cursor++;
+                    }
+                    break;
+                case '&':
+                    if(expression.charAt(cursor + 1) == '&') {
+                        token = Token.TOK_AND;
+                        cursor += 2;
+                    } else {
+                        token = Token.ILLEGAL_TOKEN;
+                        cursor++;
+                    }
+                    break;
+                case '|':
+                    if(expression.charAt(cursor + 1) == '|') {
+                        token = Token.TOK_OR;
+                        cursor += 2;
+                    } else {
+                        token = Token.ILLEGAL_TOKEN;
+                        cursor++;
+                    }
                     break;
                 case '"': {
                     String tempString = "";
@@ -139,7 +206,27 @@ public class Lexer {
                 }
                 break;
                 default: {
-                    if (Character.isLetter(expression.charAt(cursor))) {
+                    if (Character.isDigit(expression.charAt(cursor))) {
+                        String tempString = "";
+
+                        while (cursor < length
+                                && Character.isDigit(expression.charAt(cursor))) {
+                            tempString += expression.charAt(cursor);
+                            cursor++;
+                        }
+                        // Cover for decimal number
+                        if (expression.charAt(cursor) == '.') {
+                            tempString += '.';
+                            cursor++;
+                            while (cursor < length
+                                    && Character.isDigit(expression.charAt(cursor))) {
+                                tempString += expression.charAt(cursor);
+                                cursor++;
+                            }
+                        }
+                        number = Double.valueOf(tempString);
+                        token = Token.TOK_NUMERIC;
+                    } else if (Character.isLetter(expression.charAt(cursor))) {
                         //ie. PRINT or PRINTLINE
 
                         String tempString = String.valueOf(expression.charAt(cursor));
@@ -162,9 +249,7 @@ public class Lexer {
 
                         this.lastStr = tempString;
                         return Token.TOK_UNQUOTED_STRING;
-                    }
-                    else
-                    {
+                    } else {
                         token = Token.ILLEGAL_TOKEN;
                         System.out.println("Error While Analyzing Tokens");
                         throw new Exception();
@@ -199,7 +284,7 @@ public class Lexer {
     }
 
     public int saveIndex(){
-        return index;
+        return cursor;
     }
 
     public String getPreviousLine(int pindex) {
@@ -234,6 +319,16 @@ public class Lexer {
     }
 
     public void restoreIndex(int m_index) {
-        index = m_index;
+        cursor = m_index;
+    }
+
+    public void skipToEoln() {
+        while (cursor < length && (expression.charAt(cursor) != '\n')) {
+            cursor++;
+        }
+
+        if (cursor == length) {
+            return;
+        }
     }
 }
