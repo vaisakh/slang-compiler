@@ -41,13 +41,13 @@ public class Lexer {
     protected Token getNext() throws Exception {
         lastToken = currentToken;
         currentToken = getToken();
+//        System.out.println("GetNext -: "+ currentToken);
         return currentToken;
     }
 
     public Token getToken() throws Exception {
         Token token;
         boolean restart = false;
-
         do {
             token = Token.ILLEGAL_TOKEN;
 
@@ -174,37 +174,37 @@ public class Lexer {
                         return token;
                     }
                 }
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                case '8':
-                case '9':
-                {
-                    String str = "";
-                    while (cursor < length &&
-                            (expression.charAt(cursor) == '0' ||
-                                    expression.charAt(cursor) == '1' ||
-                                    expression.charAt(cursor) == '2' ||
-                                    expression.charAt(cursor) == '3' ||
-                                    expression.charAt(cursor) == '4' ||
-                                    expression.charAt(cursor) == '5' ||
-                                    expression.charAt(cursor) == '6' ||
-                                    expression.charAt(cursor) == '7' ||
-                                    expression.charAt(cursor) == '8' ||
-                                    expression.charAt(cursor) == '9'))
-                    {
-                        str += String.valueOf(expression.charAt(cursor));
-                        cursor++;
-                    }
-                    number = Double.valueOf(str);
-                    token = Token.TOK_DOUBLE;
-                }
-                break;
+//                case '0':
+//                case '1':
+//                case '2':
+//                case '3':
+//                case '4':
+//                case '5':
+//                case '6':
+//                case '7':
+//                case '8':
+//                case '9':
+//                {
+//                    String str = "";
+//                    while (cursor < length &&
+//                            (expression.charAt(cursor) == '0' ||
+//                                    expression.charAt(cursor) == '1' ||
+//                                    expression.charAt(cursor) == '2' ||
+//                                    expression.charAt(cursor) == '3' ||
+//                                    expression.charAt(cursor) == '4' ||
+//                                    expression.charAt(cursor) == '5' ||
+//                                    expression.charAt(cursor) == '6' ||
+//                                    expression.charAt(cursor) == '7' ||
+//                                    expression.charAt(cursor) == '8' ||
+//                                    expression.charAt(cursor) == '9'))
+//                    {
+//                        str += String.valueOf(expression.charAt(cursor));
+//                        cursor++;
+//                    }
+//                    number = Double.valueOf(str);
+//                    token = Token.TOK_DOUBLE;
+//                }
+//                break;
                 default: {
                     if (Character.isDigit(expression.charAt(cursor))) {
                         String tempString = "";
@@ -240,9 +240,11 @@ public class Lexer {
                         //PRINT or PRINTLINE
 
                         tempString = tempString.toUpperCase();
+                        System.out.println("TEMP STRING : "+ tempString);
 
 
                         for (int i = 0; i < keywords.length; ++i) {
+//                            System.out.println("KEYWORD " + keywords[i].value + " ===? " + tempString);
                             if (keywords[i].value.compareTo(tempString) == 0)
                                 return keywords[i].token;
                         }

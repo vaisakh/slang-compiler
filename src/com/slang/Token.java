@@ -8,7 +8,7 @@ public enum Token {
     TOK_MUL, // `*`
     TOK_OPAREN, // `(`
     TOK_CPAREN, // `)`
-    TOK_DOUBLE, // [0-9]+
+//    TOK_DOUBLE, // [0-9]+
     TOK_NULL, // End of string
     TOK_PRINT, // Print statement
     TOK_PRINTLN, // PrintLine statement

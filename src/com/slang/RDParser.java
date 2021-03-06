@@ -114,16 +114,16 @@ public class RDParser extends Lexer {
             returnValue = new BooleanConstantExpression(currentToken == Token.TOK_BOOL_TRUE ? true : false);
             currentToken = getToken();
         }
-        else if (currentToken == Token.TOK_DOUBLE)
-        {
-            returnValue = new NumericConstantExpression(getNumber());
-            currentToken = getToken();
-        }
+//        else if (currentToken == Token.TOK_DOUBLE)
+//        {
+//            returnValue = new NumericConstantExpression(getNumber());
+//            currentToken = getToken();
+//        }
         else if (currentToken == Token.TOK_OPAREN)
         {
             currentToken = getToken();
 
-            returnValue = Expr(context);  // Recurse
+            returnValue = BExpr(context);  // Recurse
 
             if (currentToken != Token.TOK_CPAREN)
             {
@@ -143,6 +143,12 @@ public class RDParser extends Lexer {
             } else {
                 returnValue = new UnaryMinus(returnValue);
             }
+        } else if (currentToken == Token.TOK_NOT) {
+            lToken = currentToken;
+            currentToken = getToken();
+            returnValue = Factor(context);
+
+            returnValue = new LogicalNot(returnValue);
         } else if(currentToken == Token.TOK_UNQUOTED_STRING) {
             ///
             ///  Variables
@@ -263,7 +269,7 @@ public class RDParser extends Lexer {
 //        return prog.getProgram();
 
         getNext();   // Get The First Valid Token
-
+        System.out.println("FIRST VALID TOKEN ===== "+ currentToken);
         return parseFunctions();
     }
 
@@ -298,6 +304,7 @@ public class RDParser extends Lexer {
                 arr.add(temp);
             }
         }
+
         return arr;
     }
 
@@ -365,7 +372,7 @@ public class RDParser extends Lexer {
 
     public Statement ParseVariableDeclStatement(ProcedureBuilder context) throws Exception {
         Token token = currentToken;
-
+        System.out.println("Var DECL: " + token);
         getNext();
 
         if(currentToken == Token.TOK_UNQUOTED_STRING) {
@@ -392,9 +399,11 @@ public class RDParser extends Lexer {
 
     public Statement ParseAssignmentStatement(ProcedureBuilder context) throws Exception {
         String variable = super.lastStr;
+        System.out.println("VARIABLE :" + variable);
         Symbol symbol = context.getSymbolTable().getSymbol(variable);
 
         if(symbol == null) {
+            System.out.println("SYMBOL NULL? : "+ lastStr);
             CSyntaxErrorLog.addLine("Variable not found " + lastStr);
             CSyntaxErrorLog.addLine(getCurrentLine(saveIndex()));
             throw new CParserException(-100, "Variable not found", saveIndex());
